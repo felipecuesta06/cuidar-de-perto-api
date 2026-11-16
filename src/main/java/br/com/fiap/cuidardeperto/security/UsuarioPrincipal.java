@@ -26,7 +26,7 @@ public class UsuarioPrincipal implements UserDetails {
         this.ativo = usuario.isAtivo();
     }
 
-   
+
     public Long getId() {
         return id;
     }

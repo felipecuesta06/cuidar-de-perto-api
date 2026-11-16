@@ -62,7 +62,7 @@ public class ApiExceptionHandler {
                 List.of(new CampoErro(ex.getName(), "valor invalido")));
     }
 
-    /** ?sort=campoInexistente: erro do cliente (400), nao do servidor. */
+
     @ExceptionHandler(PropertyReferenceException.class)
     public ResponseEntity<ErroResponse> ordenacaoInvalida(PropertyReferenceException ex, HttpServletRequest req) {
         return resposta(HttpStatus.BAD_REQUEST, "Campo de ordenacao invalido: '" + ex.getPropertyName() + "'", req,
