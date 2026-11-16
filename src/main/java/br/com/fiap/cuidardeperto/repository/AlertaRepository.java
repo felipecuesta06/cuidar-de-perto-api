@@ -20,14 +20,14 @@ import java.util.Optional;
 
 public interface AlertaRepository extends JpaRepository<Alerta, Long>, JpaSpecificationExecutor<Alerta> {
 
-    /** Projecao para a contagem por gravidade. */
+
     interface ResumoGravidade {
         Gravidade getGravidade();
 
         Long getTotal();
     }
 
-    // ---- query methods derivados ----
+
     Page<Alerta> findByIdosoIdAndStatus(Long idosoId, StatusAlerta status, Pageable pageable);
 
     List<Alerta> findByIdosoIdAndStatusIn(Long idosoId, Collection<StatusAlerta> status);
@@ -40,18 +40,11 @@ public interface AlertaRepository extends JpaRepository<Alerta, Long>, JpaSpecif
     List<Alerta> findByTipoAndGravidadeAndStatusAndCriadoEmBefore(
             TipoAlerta tipo, Gravidade gravidade, StatusAlerta status, LocalDateTime limite);
 
-    /** Carrega o idoso junto na busca por Specification (evita N+1 na listagem). */
+
     @Override
     @EntityGraph(attributePaths = "idoso")
     Page<Alerta> findAll(Specification<Alerta> spec, Pageable pageable);
 
-    // ---- @Query JPQL ----
-
-    /**
-     * Consulta critica do dominio: painel do cuidador com alertas ABERTOS de gravidade ALTA/CRITICA dos idosos
-     * vinculados a ele. A gravidade e gravada como texto, entao a ordenacao usa CASE (CRITICA primeiro) em vez de
-     * ORDER BY gravidade, que seria alfabetico.
-     */
     @Query(value = """
             SELECT a FROM Alerta a
             JOIN FETCH a.idoso i
@@ -73,7 +66,7 @@ public interface AlertaRepository extends JpaRepository<Alerta, Long>, JpaSpecif
             """)
     Page<Alerta> painelUrgente(@Param("cuidadorId") Long cuidadorId, Pageable pageable);
 
-    /** Agregacao (GROUP BY): alertas por gravidade a partir de uma data (ex.: ultimas 24h). */
+
     @Query("SELECT a.gravidade AS gravidade, COUNT(a) AS total FROM Alerta a "
             + "WHERE a.criadoEm >= :desde GROUP BY a.gravidade")
     List<ResumoGravidade> contagemPorGravidade(@Param("desde") LocalDateTime desde);

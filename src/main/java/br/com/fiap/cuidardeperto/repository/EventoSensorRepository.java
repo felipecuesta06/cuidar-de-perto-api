@@ -13,7 +13,7 @@ import java.util.Optional;
 
 public interface EventoSensorRepository extends JpaRepository<EventoSensor, Long> {
 
-    /** @Query JPQL: filtros combinados + ordenacao, que o nome do metodo nao expressa bem. */
+
     @Query("SELECT e FROM EventoSensor e WHERE e.idoso.id = :idosoId AND e.tipo = :tipo "
             + "AND e.dataHora >= :desde AND e.dataHora <= :ate ORDER BY e.dataHora DESC")
     Page<EventoSensor> historicoPorTipo(@Param("idosoId") Long idosoId,
@@ -29,6 +29,5 @@ public interface EventoSensorRepository extends JpaRepository<EventoSensor, Long
                                  @Param("ate") LocalDateTime ate,
                                  Pageable pageable);
 
-    /** Ultima leitura de um sinal (usa o indice idoso_id + data_hora). */
     Optional<EventoSensor> findFirstByIdosoIdAndTipoOrderByDataHoraDesc(Long idosoId, TipoSinal tipo);
 }

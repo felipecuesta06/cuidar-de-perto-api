@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface IdosoRepository extends JpaRepository<Idoso, Long>, JpaSpecificationExecutor<Idoso> {
 
-    /** Query method derivado: simples e direta, o nome do metodo ja documenta a regra. */
+
     boolean existsByCpf(String cpf);
 
     boolean existsByCpfAndIdNot(String cpf, Long id);

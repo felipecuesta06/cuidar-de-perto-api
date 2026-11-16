@@ -18,7 +18,7 @@ public interface IdosoResponsavelRepository extends JpaRepository<IdosoResponsav
 
     boolean existsByIdosoIdAndResponsavelId(Long idosoId, Long responsavelId);
 
-    /** Ordenado por prioridade (1 = primeiro a ser avisado). Usa JOIN FETCH para evitar N+1 ao notificar. */
+
     @Query("SELECT v FROM IdosoResponsavel v JOIN FETCH v.responsavel WHERE v.idoso.id = :idosoId ORDER BY v.prioridadeContato ASC")
     List<IdosoResponsavel> findComResponsavelByIdosoId(@Param("idosoId") Long idosoId);
 
