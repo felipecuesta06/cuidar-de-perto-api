@@ -11,7 +11,7 @@ public final class PageUtil {
     private PageUtil() {
     }
 
-    /** Pagina uma lista pequena ja em memoria (ex.: lembretes ativos vindos do cache). */
+
     public static <T> Page<T> paginar(List<T> lista, Pageable pageable) {
         int inicio = (int) Math.min(pageable.getOffset(), lista.size());
         int fim = Math.min(inicio + pageable.getPageSize(), lista.size());

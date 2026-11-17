@@ -1,5 +1,6 @@
 package br.com.fiap.cuidardeperto.service;
 
+import br.com.fiap.cuidardeperto.config.CacheConfig;
 import br.com.fiap.cuidardeperto.domain.Cuidador;
 import br.com.fiap.cuidardeperto.domain.Idoso;
 import br.com.fiap.cuidardeperto.domain.IdosoResponsavel;
@@ -20,6 +21,7 @@ import br.com.fiap.cuidardeperto.repository.IdosoSpecs;
 import br.com.fiap.cuidardeperto.repository.ResponsavelRepository;
 import br.com.fiap.cuidardeperto.security.AcessoService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -37,9 +39,7 @@ public class IdosoService {
     private final AuthService authService;
     private final AcessoService acesso;
 
-    // ------------------------------------------------------------------ CRUD
 
-    /** Cadastra o idoso. Cuidador logado passa a acompanha-lo; admin precisa informar cuidadorId. */
     @Transactional
     public IdosoResponse criar(IdosoRequest req) {
         if (idosoRepository.existsByCpf(req.cpf())) {
@@ -65,7 +65,7 @@ public class IdosoService {
         return IdosoResponse.detalhe(buscar(id));
     }
 
-    /** Busca com filtros dinamicos (Specification); cuidador so enxerga os idosos vinculados a ele. */
+
     @Transactional(readOnly = true)
     public Page<IdosoResponse> listar(String nome, Integer idadeMin, Integer idadeMax, String condicao,
                                       Boolean ativo, Pageable pageable) {
@@ -91,6 +91,7 @@ public class IdosoService {
 
     /** Inativacao logica (204): o historico de eventos e alertas e preservado. */
     @Transactional
+    @CacheEvict(cacheNames = CacheConfig.IDOSO_ESTADO, key = "#id")
     public void inativar(Long id) {
         Idoso idoso = buscar(id);
         idoso.setAtivo(false);

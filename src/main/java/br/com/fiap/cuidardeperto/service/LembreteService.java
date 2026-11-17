@@ -1,5 +1,6 @@
 package br.com.fiap.cuidardeperto.service;
 
+import br.com.fiap.cuidardeperto.config.CacheConfig;
 import br.com.fiap.cuidardeperto.domain.Gravidade;
 import br.com.fiap.cuidardeperto.domain.Idoso;
 import br.com.fiap.cuidardeperto.domain.LembreteRemedio;
@@ -11,6 +12,8 @@ import br.com.fiap.cuidardeperto.repository.IdosoRepository;
 import br.com.fiap.cuidardeperto.repository.LembreteRepository;
 import br.com.fiap.cuidardeperto.security.AcessoService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -35,6 +38,7 @@ public class LembreteService {
     private final AcessoService acesso;
 
     @Transactional
+    @CacheEvict(cacheNames = CacheConfig.LEMBRETES_DIA, key = "#idosoId")
     public LembreteResponse criar(Long idosoId, LembreteRequest req) {
         Idoso idoso = idosoRepository.findById(idosoId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Idoso", idosoId));
@@ -44,7 +48,8 @@ public class LembreteService {
         return LembreteResponse.de(lembreteRepository.save(lembrete));
     }
 
-    /** Lembretes ativos vigentes hoje. Cache "lembretes-dia" (chave = idosoId): dado muda pouco durante o dia. */
+
+    @Cacheable(cacheNames = CacheConfig.LEMBRETES_DIA, key = "#idosoId")
     @Transactional(readOnly = true)
     public List<LembreteResponse> ativosDoDia(Long idosoId) {
         LocalDate hoje = LocalDate.now();
@@ -61,6 +66,7 @@ public class LembreteService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = CacheConfig.LEMBRETES_DIA, allEntries = true)
     public LembreteResponse atualizar(Long id, LembreteRequest req) {
         LembreteRemedio lembrete = buscar(id);
         acesso.exigirEditar(lembrete.getIdoso().getId());
@@ -69,6 +75,7 @@ public class LembreteService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = CacheConfig.LEMBRETES_DIA, allEntries = true)
     public void remover(Long id) {
         LembreteRemedio lembrete = buscar(id);
         acesso.exigirEditar(lembrete.getIdoso().getId());
@@ -77,6 +84,7 @@ public class LembreteService {
 
     /** Registra a tomada: zera as omissoes seguidas. */
     @Transactional
+    @CacheEvict(cacheNames = CacheConfig.LEMBRETES_DIA, allEntries = true)
     public LembreteResponse confirmar(Long id) {
         LembreteRemedio lembrete = buscar(id);
         acesso.exigirRegistrar(lembrete.getIdoso().getId());

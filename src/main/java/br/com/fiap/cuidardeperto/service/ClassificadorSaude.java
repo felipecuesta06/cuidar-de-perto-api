@@ -6,29 +6,22 @@ import br.com.fiap.cuidardeperto.domain.TipoAlerta;
 import br.com.fiap.cuidardeperto.domain.TipoSinal;
 import org.springframework.stereotype.Component;
 
-/**
- * Compara cada leitura com os limites DO IDOSO e classifica a gravidade.
- * <p>
- * Os limites do idoso definem a faixa normal [min, max]. A distancia ate a faixa define a gravidade, com as
- * margens abaixo calibradas para reproduzir EXATAMENTE a tabela do enunciado quando os limites sao os padrao
- * (ex.: batimentos 60-100: 50-59 e 101-120 = MEDIA; 40-49 e 121-140 = ALTA; &lt;40 e &gt;140 = CRITICA).
- * Se o cuidador mudar os limites, as faixas de atencao se deslocam junto.
- */
+
 @Component
 public class ClassificadorSaude {
 
-    /** Margens (desvio ate a faixa normal): ate MEDIA = atencao; ate ALTA = grave; alem disso = critico. */
+
     private static final double[] FC_ABAIXO = {10, 20};
     private static final double[] FC_ACIMA = {20, 40};
     private static final double[] GLICEMIA_ABAIXO = {10, 16};
     private static final double[] GLICEMIA_ACIMA = {60, 160};
     private static final double[] SPO2_ABAIXO = {3, 7};
     private static final double[] PRESSAO_ACIMA = {20, 40};
-    /** Hipotensao (pressao sistolica): nao consta no enunciado, assumida aqui e documentada no README. */
+
     private static final double PRESSAO_SIST_MINIMA = 90;
     private static final double[] PRESSAO_ABAIXO = {10, 20};
 
-    /** Resultado: gravidade == null significa leitura normal (nenhum alerta). */
+
     public record Resultado(Gravidade gravidade, TipoAlerta tipoAlerta, String mensagem) {
         public boolean normal() {
             return gravidade == null;

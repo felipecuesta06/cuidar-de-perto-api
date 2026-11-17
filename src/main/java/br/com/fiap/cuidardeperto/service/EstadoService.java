@@ -1,5 +1,6 @@
 package br.com.fiap.cuidardeperto.service;
 
+import br.com.fiap.cuidardeperto.config.CacheConfig;
 import br.com.fiap.cuidardeperto.domain.Gravidade;
 import br.com.fiap.cuidardeperto.domain.Idoso;
 import br.com.fiap.cuidardeperto.domain.StatusAlerta;
@@ -12,6 +13,7 @@ import br.com.fiap.cuidardeperto.repository.AlertaRepository;
 import br.com.fiap.cuidardeperto.repository.EventoSensorRepository;
 import br.com.fiap.cuidardeperto.repository.IdosoRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,12 +30,8 @@ public class EstadoService {
     private final EventoSensorRepository eventoRepository;
     private final AlertaRepository alertaRepository;
 
-    /**
-     * Estado atual: ultimo valor de cada sinal + alertas abertos. Cache "idoso-estado" (chave = idosoId): e a tela
-     * mais consultada (app do idoso e da familia) e evita varrer o historico a cada abertura.
-     * Invalidado ao receber evento de sensor e ao criar/resolver alerta do idoso. A autorizacao e verificada no
-     * controller ANTES de chegar aqui, entao o cache nunca vaza dados entre usuarios.
-     */
+
+    @Cacheable(cacheNames = CacheConfig.IDOSO_ESTADO, key = "#idosoId")
     @Transactional(readOnly = true)
     public EstadoIdosoResponse estadoDoIdoso(Long idosoId) {
         Idoso idoso = idosoRepository.findById(idosoId)

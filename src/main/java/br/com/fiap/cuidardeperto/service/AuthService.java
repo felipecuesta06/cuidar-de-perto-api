@@ -34,7 +34,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
 
-    /** Cria a conta (senha com BCrypt) e o perfil. Cadastro publico: somente CUIDADOR ou RESPONSAVEL. */
+
     @Transactional
     public UsuarioResponse cadastrar(CadastroRequest req) {
         if (req.papel() != Papel.CUIDADOR && req.papel() != Papel.RESPONSAVEL) {
@@ -64,7 +64,7 @@ public class AuthService {
         return new UsuarioResponse(usuario.getId(), email, Papel.RESPONSAVEL, responsavelRepository.save(r).getId());
     }
 
-    /** Cria apenas a conta de acesso (usada tambem para o login do idoso). */
+
     @Transactional
     public Usuario novoUsuario(String email, String senha, Papel papel) {
         String emailNormalizado = email.trim().toLowerCase();
@@ -79,7 +79,7 @@ public class AuthService {
         return usuarioRepository.save(u);
     }
 
-    /** Credenciais invalidas lancam AuthenticationException, mapeada para 401 no ApiExceptionHandler. */
+
     public TokenResponse login(LoginRequest req) {
         Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(req.email().trim().toLowerCase(), req.senha()));

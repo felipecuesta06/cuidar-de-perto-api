@@ -1,5 +1,6 @@
 package br.com.fiap.cuidardeperto.service;
 
+import br.com.fiap.cuidardeperto.config.CacheConfig;
 import br.com.fiap.cuidardeperto.domain.Alerta;
 import br.com.fiap.cuidardeperto.domain.EventoSensor;
 import br.com.fiap.cuidardeperto.domain.Idoso;
@@ -11,6 +12,7 @@ import br.com.fiap.cuidardeperto.exception.RegraNegocioException;
 import br.com.fiap.cuidardeperto.repository.EventoSensorRepository;
 import br.com.fiap.cuidardeperto.repository.IdosoRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,11 +29,9 @@ public class EventoSensorService {
     private final ClassificadorSaude classificador;
     private final AlertaService alertaService;
 
-    /**
-     * Recebe a leitura, classifica contra os limites do idoso e, se estiver fora do ideal, abre/agrega um alerta.
-     * Nao e cacheado, mas invalida o estado do idoso (a leitura mais recente mudou).
-     */
+
     @Transactional
+    @CacheEvict(cacheNames = CacheConfig.IDOSO_ESTADO, key = "#req.idosoId()")
     public EventoSensorResponse registrar(EventoSensorRequest req) {
         Idoso idoso = idosoRepository.findById(req.idosoId())
                 .filter(Idoso::isAtivo)
@@ -60,7 +60,7 @@ public class EventoSensorService {
         return EventoSensorResponse.de(evento, alertaId);
     }
 
-    /** Historico com filtro opcional por tipo e periodo (ultimos 30 dias por padrao). */
+
     @Transactional(readOnly = true)
     public Page<EventoSensorResponse> historico(Long idosoId, TipoSinal tipo, LocalDateTime de, LocalDateTime ate,
                                                 Pageable pageable) {

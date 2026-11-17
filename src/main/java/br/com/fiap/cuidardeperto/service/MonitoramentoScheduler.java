@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 
-/** Rotinas automaticas: lembretes nao confirmados e escalonamento de alertas (a cada minuto por padrao). */
+
 @Component
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "app.monitor.enabled", havingValue = "true", matchIfMissing = true)

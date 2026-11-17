@@ -1,5 +1,6 @@
 package br.com.fiap.cuidardeperto.service;
 
+import br.com.fiap.cuidardeperto.config.CacheConfig;
 import br.com.fiap.cuidardeperto.domain.Alerta;
 import br.com.fiap.cuidardeperto.domain.Cuidador;
 import br.com.fiap.cuidardeperto.domain.EventoSensor;
@@ -19,6 +20,9 @@ import br.com.fiap.cuidardeperto.repository.IdosoResponsavelRepository;
 import br.com.fiap.cuidardeperto.security.AcessoService;
 import br.com.fiap.cuidardeperto.service.NotificacaoService.Destinatario;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -30,10 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Regras de alerta: anti-duplicidade, escalonamento por gravidade, notificacao e resolucao.
- * Os caches idoso-estado e painel-cuidador sao invalidados sempre que um alerta e criado ou alterado.
- */
+
 @Service
 @RequiredArgsConstructor
 public class AlertaService {
@@ -43,13 +44,11 @@ public class AlertaService {
     private final NotificacaoService notificacaoService;
     private final AcessoService acesso;
 
-    // ------------------------------------------------------------------ criacao / agregacao
 
-    /**
-     * Abre um alerta ou, se ja existe um ABERTO do mesmo tipo para o mesmo idoso, agrega a ocorrencia a ele
-     * (regra anti-duplicidade). A gravidade nunca diminui na agregacao.
-     */
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(cacheNames = CacheConfig.IDOSO_ESTADO, key = "#idoso.id"),
+            @CacheEvict(cacheNames = CacheConfig.PAINEL_CUIDADOR, allEntries = true)})
     public Alerta abrirOuAgregar(Idoso idoso, EventoSensor evento, TipoAlerta tipo, Gravidade gravidade,
                                  String mensagem) {
         Optional<Alerta> existente = alertaRepository
@@ -78,12 +77,7 @@ public class AlertaService {
         return alerta;
     }
 
-    // ------------------------------------------------------------------ notificacao
 
-    /**
-     * BAIXA/MEDIA: cuidadores. ALTA: cuidadores + responsavel de maior prioridade. CRITICA: cuidadores + TODOS os
-     * responsaveis. Quem ja foi notificado neste alerta nao e avisado de novo.
-     */
     private void notificar(Alerta alerta, Idoso idoso) {
         List<Destinatario> alvo = new ArrayList<>();
         for (Cuidador c : idoso.getCuidadores()) {
@@ -126,14 +120,11 @@ public class AlertaService {
         }
     }
 
-    // ------------------------------------------------------------------ escalonamento automatico
 
-    /**
-     * Chamado pelo agendador:
-     * (1) queda ALTA sem atendimento ha 2 min vira CRITICA ("queda sem resposta");
-     * (2) alerta ALTA aberto ha 5 min e escalado para todos os responsaveis.
-     */
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(cacheNames = CacheConfig.IDOSO_ESTADO, allEntries = true, condition = "#result > 0"),
+            @CacheEvict(cacheNames = CacheConfig.PAINEL_CUIDADOR, allEntries = true, condition = "#result > 0")})
     public int escalarPendentes(LocalDateTime agora) {
         int total = 0;
 
@@ -157,10 +148,11 @@ public class AlertaService {
         return total;
     }
 
-    // ------------------------------------------------------------------ resolucao
 
-    /** So cuidador vinculado ou admin; a resolucao exige observacao. */
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(cacheNames = CacheConfig.IDOSO_ESTADO, allEntries = true),
+            @CacheEvict(cacheNames = CacheConfig.PAINEL_CUIDADOR, allEntries = true)})
     public AlertaResponse atualizarStatus(Long id, StatusAlerta novo, String observacao) {
         Alerta alerta = alertaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Alerta", id));
@@ -190,7 +182,7 @@ public class AlertaService {
         return AlertaResponse.de(alerta);
     }
 
-    // ------------------------------------------------------------------ consultas
+
 
     @Transactional(readOnly = true)
     public AlertaResponse buscar(Long id) {
@@ -200,7 +192,7 @@ public class AlertaService {
         return AlertaResponse.de(alerta);
     }
 
-    /** Lista com filtros dinamicos (Specification), restrita ao escopo de posse do usuario. */
+
     @Transactional(readOnly = true)
     public Page<AlertaResponse> listar(Long idosoId, Gravidade gravidade, StatusAlerta status,
                                        LocalDateTime de, LocalDateTime ate, Pageable pageable) {
@@ -218,10 +210,9 @@ public class AlertaService {
         return alertaRepository.findAll(spec, pageable).map(AlertaResponse::de);
     }
 
-    /**
-     * Painel do cuidador (consulta critica). Cache "painel-cuidador": e a tela mais aberta e tem agregacao pesada;
-     * invalidado quando qualquer alerta e criado/alterado.
-     */
+
+    @Cacheable(cacheNames = CacheConfig.PAINEL_CUIDADOR,
+            key = "#cuidadorId + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
     @Transactional(readOnly = true)
     public Page<AlertaResponse> painelUrgente(Long cuidadorId, Pageable pageable) {
         return alertaRepository.painelUrgente(cuidadorId, pageable).map(AlertaResponse::de);

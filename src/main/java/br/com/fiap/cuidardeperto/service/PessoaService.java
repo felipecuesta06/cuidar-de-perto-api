@@ -15,7 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Manutencao de cuidadores e responsaveis (a exclusao e logica: ativo = false, a conta de acesso e bloqueada). */
+
 @Service
 @RequiredArgsConstructor
 public class PessoaService {
@@ -23,7 +23,7 @@ public class PessoaService {
     private final CuidadorRepository cuidadorRepository;
     private final ResponsavelRepository responsavelRepository;
 
-    // ---- cuidadores
+
     @Transactional(readOnly = true)
     public Page<CuidadorResponse> listarCuidadores(Pageable pageable) {
         return cuidadorRepository.findAll(pageable).map(CuidadorResponse::de);
@@ -50,7 +50,6 @@ public class PessoaService {
         c.getUsuario().setAtivo(false);
     }
 
-    // ---- responsaveis
     @Transactional(readOnly = true)
     public Page<ResponsavelResponse> listarResponsaveis(Pageable pageable) {
         return responsavelRepository.findAll(pageable).map(ResponsavelResponse::de);
