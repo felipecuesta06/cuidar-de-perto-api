@@ -13,6 +13,9 @@ API em **Spring Boot 3 / Java 17**,
 | João Victor De Souza Braz| 566862|
 | Lucas Marcelino Pompeu|567010|
 
+## LINK PITCH
+
+https://youtu.be/fdUkNQqSLpg
 
 
 ---
@@ -292,4 +295,4 @@ cuidar-de-perto-api/
 
 ## 11. Declaração de uso de IA generativa
 
-Ferramenta utilizada: **Gemini**, para apoio na geracao de roteiro para o pitch e apoio para a criacao do README
+Ferramenta utilizada: **Gemini**, para apoio na geracao de roteiro para o pitch e apoio para a criacao do README E EDICAO DO VIDEO DO PITCH
